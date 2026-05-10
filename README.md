@@ -7,7 +7,8 @@ A TypeScript React app that renders a sleek, pannable 360° Three.js night-sky p
 - Astronomy Engine celestial calculations for current time/location.
 - Cesium World Terrain sampling around the observer.
 - Interactive 3D panoramic scene with OrbitControls.
-- Auto geolocation with polished overlay metadata.
+- Leaflet map picker to change location interactively.
+- Live or manual observation-time controls.
 
 ## Local development
 

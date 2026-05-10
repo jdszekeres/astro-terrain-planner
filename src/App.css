@@ -108,6 +108,64 @@
   color: #99b6ec;
 }
 
+.map-panel {
+  left: 1rem;
+  bottom: 1rem;
+  width: min(360px, calc(100% - 2rem));
+  padding: 0.85rem 1rem;
+}
+
+.map-panel h2 {
+  margin: 0;
+  color: #f4f8ff;
+  font-size: 1rem;
+}
+
+.map-panel p {
+  margin: 0.4rem 0 0.75rem;
+  color: #abc1ea;
+  font-size: 0.82rem;
+}
+
+.leaflet-map {
+  height: 220px;
+  width: 100%;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.time-controls {
+  margin-top: 0.75rem;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.time-controls label {
+  font-size: 0.78rem;
+  color: #9ab4e8;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.time-controls input,
+.time-controls button {
+  border-radius: 8px;
+  border: 1px solid rgba(162, 193, 255, 0.35);
+  background: rgba(7, 16, 35, 0.7);
+  color: #e8f1ff;
+  padding: 0.45rem 0.6rem;
+  font-size: 0.9rem;
+}
+
+.time-controls button {
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.time-controls button:hover {
+  background: rgba(33, 73, 145, 0.6);
+}
+
 @media (max-width: 720px) {
   .overlay {
     top: 0.6rem;
@@ -121,5 +179,17 @@
     right: 0.6rem;
     width: auto;
     max-height: 34svh;
+  }
+
+  .map-panel {
+    left: 0.6rem;
+    right: 0.6rem;
+    width: auto;
+    bottom: auto;
+    top: min(300px, 48svh);
+  }
+
+  .leaflet-map {
+    height: 170px;
   }
 }
