@@ -1,6 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import * as Astronomy from 'astronomy-engine'
 import * as Cesium from 'cesium'
+import L from 'leaflet'
+import 'leaflet/dist/leaflet.css'
+import markerIcon from 'leaflet/dist/images/marker-icon.png'
+import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png'
+import markerShadow from 'leaflet/dist/images/marker-shadow.png'
+import { MapContainer, Marker, TileLayer, useMap, useMapEvents } from 'react-leaflet'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import './App.css'
@@ -73,6 +79,12 @@ const FIXED_STARS: Array<{
 ]
 
 let starsDefined = false
+
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: markerIcon2x,
+  iconUrl: markerIcon,
+  shadowUrl: markerShadow,
+})
 
 function defineReferenceStars() {
   if (starsDefined) {
@@ -193,6 +205,49 @@ async function fetchTerrainHeights(location: GeoLocation): Promise<number[]> {
   return samples.map((sample) => sample.height ?? location.elevationMeters)
 }
 
+function toDateTimeLocalValue(value: Date) {
+  const localTime = new Date(value.getTime() - value.getTimezoneOffset() * 60_000)
+  return localTime.toISOString().slice(0, 16)
+}
+
+function LocationPicker({
+  location,
+  onLocationChange,
+}: {
+  location: GeoLocation
+  onLocationChange: (latitude: number, longitude: number) => void
+}) {
+  useMapEvents({
+    click(event) {
+      onLocationChange(event.latlng.lat, event.latlng.lng)
+    },
+  })
+
+  return (
+    <Marker
+      draggable
+      position={[location.latitude, location.longitude]}
+      eventHandlers={{
+        dragend(event) {
+          const marker = event.target as L.Marker
+          const position = marker.getLatLng()
+          onLocationChange(position.lat, position.lng)
+        },
+      }}
+    />
+  )
+}
+
+function MapViewSync({ location }: { location: GeoLocation }) {
+  const map = useMap()
+
+  useEffect(() => {
+    map.setView([location.latitude, location.longitude], map.getZoom())
+  }, [location.latitude, location.longitude, map])
+
+  return null
+}
+
 function App() {
   const mountRef = useRef<HTMLDivElement | null>(null)
   const [location, setLocation] = useState<GeoLocation>({
@@ -202,7 +257,18 @@ function App() {
   })
   const [terrainHeights, setTerrainHeights] = useState<number[] | null>(null)
   const [terrainStatus, setTerrainStatus] = useState('Sampling Cesium World Terrain...')
-  const [time, setTime] = useState(new Date())
+  const [time, setTime] = useState(() => new Date())
+  const [timeInput, setTimeInput] = useState(() => toDateTimeLocalValue(new Date()))
+  const [isLiveTime, setIsLiveTime] = useState(true)
+
+  const updateLocation = (latitude: number, longitude: number) => {
+    setTerrainStatus('Sampling Cesium World Terrain...')
+    setLocation((previous) => ({
+      ...previous,
+      latitude,
+      longitude,
+    }))
+  }
 
   useEffect(() => {
     if (!navigator.geolocation) {
@@ -211,12 +277,11 @@ function App() {
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        setTerrainStatus('Sampling Cesium World Terrain...')
-        setLocation({
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
-          elevationMeters: position.coords.altitude ?? 50,
-        })
+        updateLocation(position.coords.latitude, position.coords.longitude)
+        setLocation((previous) => ({
+          ...previous,
+          elevationMeters: position.coords.altitude ?? previous.elevationMeters,
+        }))
       },
       () => {
         setTerrainStatus('Using default location. Allow geolocation for automatic positioning.')
@@ -226,12 +291,18 @@ function App() {
   }, [])
 
   useEffect(() => {
+    if (!isLiveTime) {
+      return
+    }
+
     const intervalId = window.setInterval(() => {
-      setTime(new Date())
+      const now = new Date()
+      setTime(now)
+      setTimeInput(toDateTimeLocalValue(now))
     }, 1_000)
 
     return () => window.clearInterval(intervalId)
-  }, [])
+  }, [isLiveTime])
 
   useEffect(() => {
     let isMounted = true
@@ -474,6 +545,35 @@ function App() {
             {time.toLocaleString()}
           </span>
         </div>
+
+        <div className="time-controls">
+          <label htmlFor="observation-time">Observation time</label>
+          <input
+            id="observation-time"
+            type="datetime-local"
+            value={timeInput}
+            onChange={(event) => {
+              const nextTime = new Date(event.target.value)
+              if (Number.isNaN(nextTime.getTime())) {
+                return
+              }
+              setIsLiveTime(false)
+              setTimeInput(event.target.value)
+              setTime(nextTime)
+            }}
+          />
+          <button
+            type="button"
+            onClick={() => {
+              const now = new Date()
+              setIsLiveTime(true)
+              setTime(now)
+              setTimeInput(toDateTimeLocalValue(now))
+            }}
+          >
+            Use current time
+          </button>
+        </div>
       </header>
 
       <aside className="legend panel">
@@ -491,6 +591,24 @@ function App() {
         </ul>
         <p className="status">{terrainStatus}</p>
       </aside>
+
+      <section className="map-panel panel">
+        <h2>Location map</h2>
+        <p>Click the map or drag the marker to change location.</p>
+        <MapContainer
+          center={[location.latitude, location.longitude]}
+          zoom={9}
+          scrollWheelZoom
+          className="leaflet-map"
+        >
+          <TileLayer
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          />
+          <MapViewSync location={location} />
+          <LocationPicker location={location} onLocationChange={updateLocation} />
+        </MapContainer>
+      </section>
 
       <div className="scene" ref={mountRef} />
     </div>
