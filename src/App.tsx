@@ -525,6 +525,7 @@ function App() {
     }
     const starTexture = new THREE.CanvasTexture(starTextureCanvas)
     const clickableSprites: THREE.Sprite[] = []
+    const spriteLabels = new Map<number, string>()
 
     skyObjects.forEach((obj) => {
       const sprite = new THREE.Sprite(
@@ -537,8 +538,8 @@ function App() {
       )
       sprite.position.copy(toScenePosition(obj.altitude, obj.azimuth, 420))
       sprite.scale.setScalar(obj.size * 5.5)
-      sprite.userData = { label: obj.name }
       clickableSprites.push(sprite)
+      spriteLabels.set(sprite.id, obj.name)
       scene.add(sprite)
     })
 
@@ -550,7 +551,7 @@ function App() {
       pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1
       raycaster.setFromCamera(pointer, camera)
       const [selection] = raycaster.intersectObjects(clickableSprites, false)
-      setSelectedObjectName(selection ? String(selection.object.userData.label) : null)
+      setSelectedObjectName(selection ? spriteLabels.get(selection.object.id) ?? null : null)
     }
     renderer.domElement.addEventListener('pointerdown', onPointerDown)
 
