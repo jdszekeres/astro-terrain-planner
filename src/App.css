@@ -1,0 +1,250 @@
+.app {
+  position: relative;
+  min-height: 100svh;
+  overflow: hidden;
+}
+
+.scene {
+  height: 100svh;
+  width: 100%;
+}
+
+.panel {
+  position: absolute;
+  z-index: 4;
+  backdrop-filter: blur(12px);
+  background: rgba(6, 11, 24, 0.68);
+  border: 1px solid rgba(145, 184, 252, 0.23);
+  color: #e5efff;
+  border-radius: 14px;
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.35);
+}
+
+.overlay {
+  top: 1rem;
+  left: 1rem;
+  max-width: min(700px, calc(100% - 2rem));
+  padding: 1rem 1.2rem;
+  pointer-events: none;
+}
+
+.overlay .time-controls {
+  pointer-events: auto;
+}
+
+.overlay .time-controls label,
+.overlay .time-controls input,
+.overlay .time-controls button {
+  pointer-events: auto;
+}
+
+.overlay h1 {
+  margin: 0;
+  font-size: clamp(1.2rem, 2vw, 1.8rem);
+  color: #f4f8ff;
+}
+
+.overlay p {
+  margin: 0.4rem 0 0;
+  color: #bed4fb;
+}
+
+.meta-grid {
+  margin-top: 0.85rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 0.55rem;
+}
+
+.meta-grid span {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.92rem;
+  color: #c8d8f8;
+}
+
+.meta-grid strong {
+  font-size: 0.73rem;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: #9ab4e8;
+}
+
+.legend {
+  right: 1rem;
+  bottom: 1rem;
+  width: min(220px, calc(100% - 2rem));
+  padding: 0.85rem 1rem;
+  pointer-events: none;
+}
+
+.legend h2 {
+  margin: 0;
+  font-size: 1rem;
+  color: #f4f8ff;
+}
+
+.selected-object {
+  margin: 0.55rem 0 0;
+  font-size: 0.84rem;
+  color: #bed4fb;
+}
+
+.selected-object strong {
+  color: #d9e6ff;
+}
+
+.compass-rose {
+  margin-top: 0.65rem;
+}
+
+.compass-ring {
+  position: relative;
+  width: 84px;
+  height: 84px;
+  margin: 0 auto;
+  border-radius: 50%;
+  border: 1px solid rgba(169, 198, 255, 0.5);
+  box-shadow: inset 0 0 16px rgba(90, 130, 214, 0.28);
+}
+
+.compass-cardinal {
+  position: absolute;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  color: #d6e5ff;
+}
+
+.compass-n {
+  top: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.compass-e {
+  top: 50%;
+  right: 6px;
+  transform: translateY(-50%);
+}
+
+.compass-s {
+  bottom: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.compass-w {
+  top: 50%;
+  left: 6px;
+  transform: translateY(-50%);
+}
+
+.compass-needle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 2px;
+  height: 26px;
+  border-radius: 999px;
+  transform-origin: 50% 85%;
+  background: linear-gradient(180deg, #ff8c7c 0%, #ffd4cf 55%, rgba(255, 212, 207, 0.25) 100%);
+}
+
+.compass-heading {
+  margin: 0.45rem 0 0;
+  text-align: center;
+  font-size: 0.8rem;
+  color: #c6d9fb;
+}
+
+.status {
+  margin: 0;
+  font-size: 0.83rem;
+  color: #99b6ec;
+}
+
+.map-panel {
+  left: 1rem;
+  bottom: 1rem;
+  width: min(360px, calc(100% - 2rem));
+  padding: 0.85rem 1rem;
+}
+
+.map-panel h2 {
+  margin: 0;
+  color: #f4f8ff;
+  font-size: 1rem;
+}
+
+.map-panel p {
+  margin: 0.4rem 0 0.75rem;
+  color: #abc1ea;
+  font-size: 0.82rem;
+}
+
+.leaflet-map {
+  height: 220px;
+  width: 100%;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.time-controls {
+  margin-top: 0.75rem;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.time-controls label {
+  font-size: 0.78rem;
+  color: #9ab4e8;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.time-controls input,
+.time-controls button {
+  border-radius: 8px;
+  border: 1px solid rgba(162, 193, 255, 0.35);
+  background: rgba(7, 16, 35, 0.7);
+  color: #e8f1ff;
+  padding: 0.45rem 0.6rem;
+  font-size: 0.9rem;
+}
+
+.time-controls button {
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.time-controls button:hover {
+  background: rgba(33, 73, 145, 0.6);
+}
+
+@media (max-width: 720px) {
+  .overlay {
+    top: 0.6rem;
+    left: 0.6rem;
+    right: 0.6rem;
+    max-width: none;
+  }
+
+  .legend {
+    left: 0.6rem;
+    right: 0.6rem;
+    width: auto;
+    max-height: 34svh;
+  }
+
+  .map-panel {
+    left: 0.6rem;
+    right: 0.6rem;
+    width: auto;
+    bottom: auto;
+    top: min(300px, 48svh);
+  }
+
+  .leaflet-map {
+    height: 170px;
+  }
+}
