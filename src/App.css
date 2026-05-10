@@ -25,6 +25,12 @@
   left: 1rem;
   max-width: min(700px, calc(100% - 2rem));
   padding: 1rem 1.2rem;
+  pointer-events: none;
+}
+
+.overlay .time-controls,
+.overlay .time-controls * {
+  pointer-events: auto;
 }
 
 .overlay h1 {
@@ -66,6 +72,7 @@
   max-height: min(440px, 65svh);
   overflow: auto;
   padding: 0.85rem 1rem;
+  pointer-events: none;
 }
 
 .legend h2 {
