@@ -9,6 +9,7 @@ A TypeScript React app that renders a sleek, pannable 360° Three.js night-sky p
 - Interactive 3D panoramic scene with OrbitControls.
 - Leaflet map picker to change location interactively.
 - Live or manual observation-time controls.
+- HIP catalog star rendering (position, brightness, and color).
 
 ## Local development
 

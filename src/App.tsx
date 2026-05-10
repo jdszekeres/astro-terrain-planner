@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import * as Astronomy from 'astronomy-engine'
 import * as Cesium from 'cesium'
 import L from 'leaflet'
+import 'leaflet/dist/leaflet.css'
+import hipStarCatalog from './assets/HIP_star.dat?raw'
 
 import { MapContainer, Marker, TileLayer, useMap, useMapEvents } from 'react-leaflet'
 import * as THREE from 'three'
@@ -20,6 +22,14 @@ type SkyObject = {
   azimuth: number
   color: string
   size: number
+}
+
+type CatalogStar = {
+  hip: number
+  raHours: number
+  decDeg: number
+  magnitude: number
+  color: string
 }
 
 const PLANET_COLORS: Record<Astronomy.Body, string> = {
@@ -58,37 +68,82 @@ const PLANETS = [
   Astronomy.Body.Neptune,
 ]
 
-const FIXED_STARS: Array<{
-  id: Astronomy.Body
-  name: string
-  ra: number
-  dec: number
-  color: string
-}> = [
-  { id: Astronomy.Body.Star1, name: 'Sirius', ra: 6.75, dec: -16.72, color: '#d7f4ff' },
-  { id: Astronomy.Body.Star2, name: 'Vega', ra: 18.62, dec: 38.78, color: '#d2dbff' },
-  { id: Astronomy.Body.Star3, name: 'Arcturus', ra: 14.26, dec: 19.18, color: '#ffd7a8' },
-  { id: Astronomy.Body.Star4, name: 'Capella', ra: 5.27, dec: 46.0, color: '#fff2d5' },
-  { id: Astronomy.Body.Star5, name: 'Rigel', ra: 5.24, dec: -8.2, color: '#d8e3ff' },
-  { id: Astronomy.Body.Star6, name: 'Betelgeuse', ra: 5.92, dec: 7.41, color: '#ffc3a8' },
-  { id: Astronomy.Body.Star7, name: 'Antares', ra: 16.49, dec: -26.43, color: '#ffb49f' },
-  { id: Astronomy.Body.Star8, name: 'Deneb', ra: 20.69, dec: 45.28, color: '#ecf5ff' },
-]
+function clamp(value: number, min: number, max: number) {
+  return Math.min(Math.max(value, min), max)
+}
 
-let starsDefined = false
+function toHex(value: number) {
+  return Math.round(clamp(value, 0, 255))
+    .toString(16)
+    .padStart(2, '0')
+}
 
+function bvToColorHex(bv: number) {
+  const temperature = 4600 * ((1 / (0.92 * bv + 1.7)) + 1 / (0.92 * bv + 0.62))
+  const temp = temperature / 100
 
+  const red =
+    temp <= 66 ? 255 : 329.698727446 * Math.pow(temp - 60, -0.1332047592)
+  const green =
+    temp <= 66
+      ? 99.4708025861 * Math.log(temp) - 161.1195681661
+      : 288.1221695283 * Math.pow(temp - 60, -0.0755148492)
+  const blue =
+    temp >= 66 ? 255 : temp <= 19 ? 0 : 138.5177312231 * Math.log(temp - 10) - 305.0447927307
 
-function defineReferenceStars() {
-  if (starsDefined) {
+  return `#${toHex(red)}${toHex(green)}${toHex(blue)}`
+}
+
+function parseHipStarCatalog(rawCatalog: string): CatalogStar[] {
+  return rawCatalog
+    .trim()
+    .split('\n')
+    .slice(1)
+    .map((line) => line.trim().split(/\s+/))
+    .map((parts) => ({
+      hip: Number(parts[0]),
+      magnitude: Number(parts[1]),
+      raDeg: Number(parts[2]),
+      decDeg: Number(parts[3]),
+      bv: Number(parts[8]),
+    }))
+    .filter(
+      (star) =>
+        Number.isFinite(star.hip) &&
+        Number.isFinite(star.magnitude) &&
+        Number.isFinite(star.raDeg) &&
+        Number.isFinite(star.decDeg) &&
+        star.magnitude <= 6.5,
+    )
+    .map((star) => ({
+      hip: star.hip,
+      raHours: star.raDeg / 15,
+      decDeg: star.decDeg,
+      magnitude: star.magnitude,
+      color: Number.isFinite(star.bv) ? bvToColorHex(clamp(star.bv, -0.4, 2.0)) : '#ffffff',
+    }))
+}
+
+function sizeFromMagnitude(magnitude: number) {
+  const normalized = clamp((6.5 - magnitude) / 7, 0.1, 1)
+  return 0.8 + normalized * 1.8
+}
+
+const CATALOG_STARS = parseHipStarCatalog(hipStarCatalog)
+
+function mergeMarkerIconUrls() {
+  if (typeof window === 'undefined') {
     return
   }
 
-  FIXED_STARS.forEach((star) => {
-    Astronomy.DefineStar(star.id, star.ra, star.dec, 100)
+  L.Icon.Default.mergeOptions({
+    iconRetinaUrl: new URL('leaflet/dist/images/marker-icon-2x.png', import.meta.url).toString(),
+    iconUrl: new URL('leaflet/dist/images/marker-icon.png', import.meta.url).toString(),
+    shadowUrl: new URL('leaflet/dist/images/marker-shadow.png', import.meta.url).toString(),
   })
-  starsDefined = true
 }
+
+mergeMarkerIconUrls()
 
 function toScenePosition(altitudeDeg: number, azimuthDeg: number, radius: number) {
   const altitude = THREE.MathUtils.degToRad(altitudeDeg)
@@ -132,8 +187,6 @@ function destinationPoint(
 }
 
 function buildSkyObjects(location: GeoLocation, date: Date): SkyObject[] {
-  defineReferenceStars()
-
   const observer = new Astronomy.Observer(
     location.latitude,
     location.longitude,
@@ -153,16 +206,15 @@ function buildSkyObjects(location: GeoLocation, date: Date): SkyObject[] {
     }
   })
 
-  const starObjects = FIXED_STARS.map((star) => {
-    const equatorial = Astronomy.Equator(star.id, date, observer, true, true)
-    const horizon = Astronomy.Horizon(date, observer, equatorial.ra, equatorial.dec, 'normal')
+  const starObjects = CATALOG_STARS.map((star) => {
+    const horizon = Astronomy.Horizon(date, observer, star.raHours, star.decDeg, 'normal')
 
     return {
-      name: star.name,
+      name: `HIP ${star.hip}`,
       altitude: horizon.altitude,
       azimuth: horizon.azimuth,
       color: star.color,
-      size: 1.2,
+      size: sizeFromMagnitude(star.magnitude),
     }
   })
 
