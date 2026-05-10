@@ -32,6 +32,12 @@ type CatalogStar = {
   color: string
 }
 
+const MAX_VISIBLE_MAGNITUDE = 6.5
+const MIN_STAR_SIZE = 0.8
+const STAR_SIZE_RANGE = 1.8
+const BV_MIN = -0.4
+const BV_MAX = 2.0
+
 const PLANET_COLORS: Record<Astronomy.Body, string> = {
   [Astronomy.Body.Sun]: '#ffd37a',
   [Astronomy.Body.Moon]: '#f1f4ff',
@@ -79,6 +85,8 @@ function toHex(value: number) {
 }
 
 function bvToColorHex(bv: number) {
+  // Approximate B-V index to color using Tanner Helland's color-temperature fit.
+  // https://tannerhelland.com/2012/09/18/convert-temperature-rgb-algorithm-code.html
   const temperature = 4600 * ((1 / (0.92 * bv + 1.7)) + 1 / (0.92 * bv + 0.62))
   const temp = temperature / 100
 
@@ -99,7 +107,9 @@ function parseHipStarCatalog(rawCatalog: string): CatalogStar[] {
     .trim()
     .split('\n')
     .slice(1)
+    .filter((line) => line.trim().length > 0)
     .map((line) => line.trim().split(/\s+/))
+    .filter((parts) => parts.length >= 9)
     .map((parts) => ({
       hip: Number(parts[0]),
       magnitude: Number(parts[1]),
@@ -113,20 +123,20 @@ function parseHipStarCatalog(rawCatalog: string): CatalogStar[] {
         Number.isFinite(star.magnitude) &&
         Number.isFinite(star.raDeg) &&
         Number.isFinite(star.decDeg) &&
-        star.magnitude <= 6.5,
+        star.magnitude <= MAX_VISIBLE_MAGNITUDE,
     )
     .map((star) => ({
       hip: star.hip,
       raHours: star.raDeg / 15,
       decDeg: star.decDeg,
       magnitude: star.magnitude,
-      color: Number.isFinite(star.bv) ? bvToColorHex(clamp(star.bv, -0.4, 2.0)) : '#ffffff',
+      color: Number.isFinite(star.bv) ? bvToColorHex(clamp(star.bv, BV_MIN, BV_MAX)) : '#ffffff',
     }))
 }
 
 function sizeFromMagnitude(magnitude: number) {
-  const normalized = clamp((6.5 - magnitude) / 7, 0.1, 1)
-  return 0.8 + normalized * 1.8
+  const normalized = clamp((MAX_VISIBLE_MAGNITUDE - magnitude) / 7, 0.1, 1)
+  return MIN_STAR_SIZE + normalized * STAR_SIZE_RANGE
 }
 
 const CATALOG_STARS = parseHipStarCatalog(hipStarCatalog)
