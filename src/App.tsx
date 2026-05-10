@@ -155,19 +155,8 @@ function sizeFromMagnitude(magnitude: number) {
 
 const CATALOG_STARS = parseHipStarCatalog(hipStarCatalog)
 
-function mergeMarkerIconUrls() {
-  if (typeof window === 'undefined') {
-    return
-  }
 
-  L.Icon.Default.mergeOptions({
-    iconRetinaUrl: new URL('leaflet/dist/images/marker-icon-2x.png', import.meta.url).toString(),
-    iconUrl: new URL('leaflet/dist/images/marker-icon.png', import.meta.url).toString(),
-    shadowUrl: new URL('leaflet/dist/images/marker-shadow.png', import.meta.url).toString(),
-  })
-}
 
-mergeMarkerIconUrls()
 
 function toScenePosition(altitudeDeg: number, azimuthDeg: number, radius: number) {
   const altitude = THREE.MathUtils.degToRad(altitudeDeg)
