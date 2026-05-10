@@ -2,10 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import * as Astronomy from 'astronomy-engine'
 import * as Cesium from 'cesium'
 import L from 'leaflet'
-import 'leaflet/dist/leaflet.css'
-import markerIcon from 'leaflet/dist/images/marker-icon.png'
-import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png'
-import markerShadow from 'leaflet/dist/images/marker-shadow.png'
+
 import { MapContainer, Marker, TileLayer, useMap, useMapEvents } from 'react-leaflet'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
@@ -80,11 +77,7 @@ const FIXED_STARS: Array<{
 
 let starsDefined = false
 
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: markerIcon2x,
-  iconUrl: markerIcon,
-  shadowUrl: markerShadow,
-})
+
 
 function defineReferenceStars() {
   if (starsDefined) {
