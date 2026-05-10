@@ -329,6 +329,7 @@ function App() {
   const [time, setTime] = useState(() => new Date())
   const [timeInput, setTimeInput] = useState(() => toDateTimeLocalValue(new Date()))
   const [isLiveTime, setIsLiveTime] = useState(true)
+  const [selectedObjectName, setSelectedObjectName] = useState<string | null>(null)
 
   const updateLocation = (latitude: number, longitude: number) => {
     setTerrainStatus('Sampling Cesium World Terrain...')
@@ -534,6 +535,7 @@ function App() {
       context.fillRect(0, 0, 128, 128)
     }
     const starTexture = new THREE.CanvasTexture(starTextureCanvas)
+    const clickableSprites: THREE.Sprite[] = []
 
     skyObjects.forEach((obj) => {
       const sprite = new THREE.Sprite(
@@ -546,8 +548,22 @@ function App() {
       )
       sprite.position.copy(toScenePosition(obj.altitude, obj.azimuth, 420))
       sprite.scale.setScalar(obj.size * 5.5)
+      sprite.userData = { label: obj.name }
+      clickableSprites.push(sprite)
       scene.add(sprite)
     })
+
+    const raycaster = new THREE.Raycaster()
+    const pointer = new THREE.Vector2()
+    const onPointerDown = (event: PointerEvent) => {
+      const rect = renderer.domElement.getBoundingClientRect()
+      pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1
+      pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1
+      raycaster.setFromCamera(pointer, camera)
+      const [selection] = raycaster.intersectObjects(clickableSprites, false)
+      setSelectedObjectName(selection ? String(selection.object.userData.label) : null)
+    }
+    renderer.domElement.addEventListener('pointerdown', onPointerDown)
 
     const hemisphereLight = new THREE.HemisphereLight('#8ba5ff', '#3b5b49', 0.45)
     scene.add(hemisphereLight)
@@ -579,6 +595,7 @@ function App() {
       cancelAnimationFrame(frameId)
       resizeObserver.disconnect()
       controls.dispose()
+      renderer.domElement.removeEventListener('pointerdown', onPointerDown)
       renderer.dispose()
       terrainGeometry.dispose()
       ;(terrainMesh.material as THREE.Material).dispose()
@@ -647,6 +664,9 @@ function App() {
 
       <aside className="legend panel">
         <h2>Visible Sky Objects</h2>
+        <p className="selected-object">
+          <strong>Selected:</strong> {selectedObjectName ?? 'Click a star or planet'}
+        </p>
         <ul>
           {skyObjects.slice(0, 10).map((object) => (
             <li key={object.name}>
