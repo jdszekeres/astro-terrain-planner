@@ -74,6 +74,16 @@
   color: #f4f8ff;
 }
 
+.selected-object {
+  margin: 0.55rem 0 0;
+  font-size: 0.84rem;
+  color: #bed4fb;
+}
+
+.selected-object strong {
+  color: #d9e6ff;
+}
+
 .legend ul {
   list-style: none;
   margin: 0.75rem 0;
