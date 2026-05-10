@@ -36,6 +36,7 @@ const MAX_VISIBLE_MAGNITUDE = 6.5
 const MIN_STAR_SIZE = 0.8
 const STAR_SIZE_RANGE = 1.8
 const MAGNITUDE_NORMALIZATION_RANGE = 7
+const MIN_NORMALIZED_MAGNITUDE = 0.1
 const BV_MIN = -0.4
 const BV_MAX = 2.0
 const KELVIN_SCALE = 4600
@@ -92,6 +93,8 @@ function toHex(value: number) {
 function bvToColorHex(bv: number) {
   // Approximate B-V index to color using Tanner Helland's color-temperature fit.
   // https://tannerhelland.com/2012/09/18/convert-temperature-rgb-algorithm-code.html
+  // Temperature estimate (K) from B-V index:
+  // T = 4600 * (1/(0.92*B-V+1.7) + 1/(0.92*B-V+0.62))
   const temperature =
     KELVIN_SCALE *
     ((1 / (BV_COEFFICIENT * bv + BV_OFFSET_A)) + 1 / (BV_COEFFICIENT * bv + BV_OFFSET_B))
@@ -142,7 +145,11 @@ function parseHipStarCatalog(rawCatalog: string): CatalogStar[] {
 }
 
 function sizeFromMagnitude(magnitude: number) {
-  const normalized = clamp((MAX_VISIBLE_MAGNITUDE - magnitude) / MAGNITUDE_NORMALIZATION_RANGE, 0.1, 1)
+  const normalized = clamp(
+    (MAX_VISIBLE_MAGNITUDE - magnitude) / MAGNITUDE_NORMALIZATION_RANGE,
+    MIN_NORMALIZED_MAGNITUDE,
+    1,
+  )
   return MIN_STAR_SIZE + normalized * STAR_SIZE_RANGE
 }
 
