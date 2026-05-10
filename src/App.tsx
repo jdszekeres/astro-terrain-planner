@@ -319,6 +319,7 @@ function App() {
   const [timeInput, setTimeInput] = useState(() => toDateTimeLocalValue(new Date()))
   const [isLiveTime, setIsLiveTime] = useState(true)
   const [selectedObjectName, setSelectedObjectName] = useState<string | null>(null)
+  const [viewHeadingDeg, setViewHeadingDeg] = useState(0)
 
   const updateLocation = (latitude: number, longitude: number) => {
     setTerrainStatus('Sampling Cesium World Terrain...')
@@ -424,6 +425,18 @@ function App() {
     controls.rotateSpeed = 0.4
     controls.maxPolarAngle = Math.PI - 0.15
     controls.minPolarAngle = 0.15
+    const cameraDirection = new THREE.Vector3()
+    let lastHeading = Number.NaN
+    const updateHeading = () => {
+      camera.getWorldDirection(cameraDirection)
+      const heading =
+        (THREE.MathUtils.radToDeg(Math.atan2(cameraDirection.x, cameraDirection.z)) + 360) % 360
+      const roundedHeading = Math.round(heading)
+      if (roundedHeading !== lastHeading) {
+        lastHeading = roundedHeading
+        setViewHeadingDeg(roundedHeading)
+      }
+    }
 
     const skySphere = new THREE.Mesh(
       new THREE.SphereGeometry(700, 64, 48),
@@ -576,6 +589,7 @@ function App() {
     let frameId = 0
     const animate = () => {
       controls.update()
+      updateHeading()
       renderer.render(scene, camera)
       frameId = requestAnimationFrame(animate)
     }
@@ -653,21 +667,25 @@ function App() {
       </header>
 
       <aside className="legend panel">
-        <h2>Visible Sky Objects</h2>
+        <h2>Compass</h2>
+        <div className="compass-rose" aria-label={`Current heading ${viewHeadingDeg} degrees`}>
+          <div className="compass-ring">
+            <span className="compass-cardinal compass-n">N</span>
+            <span className="compass-cardinal compass-e">E</span>
+            <span className="compass-cardinal compass-s">S</span>
+            <span className="compass-cardinal compass-w">W</span>
+            <div
+              className="compass-needle"
+              style={{ transform: `translate(-50%, -85%) rotate(${viewHeadingDeg}deg)` }}
+            />
+          </div>
+          <p className="compass-heading">
+            <strong>Heading:</strong> {viewHeadingDeg}°
+          </p>
+        </div>
         <p className="selected-object">
           <strong>Selected:</strong> {selectedObjectName ?? 'Click a star or planet'}
         </p>
-        <ul>
-          {skyObjects.slice(0, 10).map((object) => (
-            <li key={object.name}>
-              <span className="swatch" style={{ backgroundColor: object.color }} />
-              <span>{object.name}</span>
-              <small>
-                alt {object.altitude.toFixed(1)}° · az {object.azimuth.toFixed(1)}°
-              </small>
-            </li>
-          ))}
-        </ul>
         <p className="status">{terrainStatus}</p>
       </aside>
 
