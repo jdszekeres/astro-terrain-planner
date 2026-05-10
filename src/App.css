@@ -28,8 +28,13 @@
   pointer-events: none;
 }
 
-.overlay .time-controls,
-.overlay .time-controls * {
+.overlay .time-controls {
+  pointer-events: auto;
+}
+
+.overlay .time-controls label,
+.overlay .time-controls input,
+.overlay .time-controls button {
   pointer-events: auto;
 }
 
